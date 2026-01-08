@@ -5,8 +5,8 @@ import joblib
 import requests
 import io
 
-st.set_page_config(page_title="Handwritten Digit Recognition", page_icon="")
-st.title("Handwritten Digit Recognition")
+st.set_page_config(page_title="Handwritten Digit Recognition", page_icon="✍️")
+st.title("✍️ Handwritten Digit Recognition")
 st.write("Upload a handwritten digit image and AI will try to recognize it.")
 
 # Simple model loading with fallback
@@ -22,24 +22,18 @@ def load_model():
         digits = load_digits()
         X = digits.images.reshape((len(digits.images), -1)) / 16.0
         y = digits.target
-
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
+        X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
 
         model = MLPClassifier(
             hidden_layer_sizes=(100,),
             max_iter=100,
             random_state=42
         )
-
         model.fit(X_train, y_train)
         return model
-
     except Exception as e:
         st.error(f"Model loading error: {e}")
         return None
-
 
 model = load_model()
 
@@ -49,26 +43,23 @@ else:
     st.success("Model loaded successfully!")
 
 # File uploader
-uploaded_file = st.file_uploader(
-    "Choose an image file",
-    type=["png", "jpg", "jpeg"]
-)
+uploaded_file = st.file_uploader("Choose an image file", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
     # Display the uploaded image
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    st.image(image, caption='Uploaded Image', use_column_width=True)
 
     # Process the image
     try:
         # Convert to grayscale and resize to 8x8
-        img_gray = image.convert("L")
+        img_gray = image.convert('L')
         img_resized = img_gray.resize((8, 8))
 
-        # Convert to numpy array
+        # Convert to numpy array and invert if needed
         img_array = np.array(img_resized)
 
-        # If background is light, invert
+        # If background is dark, invert
         if np.mean(img_array) > 128:
             img_array = 255 - img_array
 
@@ -86,13 +77,11 @@ if uploaded_file is not None:
             st.write("### Probabilities:")
             for i, prob in enumerate(probs):
                 st.write(f"Digit {i}: {prob:.2%}")
-
         else:
             # Fallback: simple threshold-based recognition
             st.write("## Using fallback recognition")
-            digit_guess = np.argmax(
-                np.sum(img_array.reshape(8, 8), axis=0)
-            ) % 10
+            # Simple heuristic based on pixel intensity
+            digit_guess = np.argmax(np.sum(img_array.reshape(8, 8), axis=0)) % 10
             st.write(f"Estimated digit: **{digit_guess}**")
 
     except Exception as e:
@@ -104,12 +93,9 @@ st.sidebar.write("""
 1. Upload an image of a handwritten digit (0-9)
 2. The image will be resized to 8x8 pixels
 3. AI model will predict the digit
-
-**For best results:**
-- White background  
-- Black digit  
-- Centered digit  
-- Minimal noise
+4. For best results:
+    - White background
+    - Black digit
+    - Centered digit
+    - Minimal noise
 """)
-
-
